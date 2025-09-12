@@ -94,6 +94,11 @@ namespace ECareClinicAPI.Controllers.v1
 			var result = await _loginService.ResetPasswordAsync(dto);
 			return (result.Success) ? Ok(result) : BadRequest(result);
 		}
+		[HttpGet("test")]
+		public IActionResult Test()
+		{
+			return Ok("Account Controller is working");
+		}
 
 	}
 }

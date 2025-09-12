@@ -67,7 +67,15 @@ namespace ECareClinicAPI.Extensions
 				throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 			services.AddDbContext<AppDbContext>(options =>
 			{
-				options.UseSqlServer(connectionString);
+				options.UseSqlServer(connectionString,
+					sqlOptions =>
+					{
+						sqlOptions.EnableRetryOnFailure(
+							maxRetryCount: 5,              // Number of retries
+							maxRetryDelay: TimeSpan.FromSeconds(10), // Delay between retries
+							errorNumbersToAdd: null        // You can add specific SQL error codes if needed
+						);
+					});
 			});
 
 			//Identity
