@@ -85,7 +85,6 @@ namespace ECareClinic.Infrastructure.Services
 				Message = "OTP sent to email. Please verify to continue."
 			};
 		}
-
 		public async Task<VerifyOtpResponseDto> VerifyOtpAsync(VerifyOtpDto dto)
 		{
 			var record = await _db.EmailVerifications.FirstOrDefaultAsync(v => v.Email == dto.Email);
@@ -110,9 +109,14 @@ namespace ECareClinic.Infrastructure.Services
 			}
 
 			user.EmailConfirmed = true;
-			await _userManager.UpdateAsync(user);
 
-			var token = _tokenService.GenerateToken(user);
+			// Generate token and refresh token from the TokenService
+			var tokenDto = _tokenService.GenerateToken(user);
+
+			// Save refresh token and its expiration to the user
+			user.RefreshToken = tokenDto.RefreshToken;
+			user.RefreshTokenExpiration = tokenDto.RefreshTokenExpiration;
+			await _userManager.UpdateAsync(user);
 
 			// Cleanup OTP
 			_db.EmailVerifications.Remove(record);
@@ -121,7 +125,11 @@ namespace ECareClinic.Infrastructure.Services
 			return new VerifyOtpResponseDto
 			{
 				Success = true,
-				Token = token,
+				Message = "Email verified successfully.",
+				Token = tokenDto.Token,
+				TokenExpiration = tokenDto.TokenExpiration,
+				RefreshToken = tokenDto.RefreshToken,
+				RefreshTokenExpiration = tokenDto.RefreshTokenExpiration,
 				User = new UserDto
 				{
 					Id = user.Id,

@@ -3,17 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ECareClinic.Core.DTOs.RegisterationDtos;
 
-namespace ECareClinic.Core.DTOs.LoginDtos
+namespace ECareClinic.Core.DTOs.RegisterationDtos
 {
-	public class LoginResponseDto:BaseResponseDto
+	public class TokenDto
 	{
 		public string? Token { get; set; }
 		public DateTime TokenExpiration { get; set; }
 		public string? RefreshToken { get; set; }
 		public DateTime RefreshTokenExpiration { get; set; }
-
-		public UserDto? User { get; set; }
 	}
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Azure;
 using ECareClinic.Core.DTOs;
 using ECareClinic.Core.DTOs.LoginDtos;
 using ECareClinic.Core.DTOs.RegisterationDtos;
@@ -13,6 +15,7 @@ using ECareClinic.Core.ServiceContracts;
 using ECareClinic.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ECareClinic.Infrastructure.Services
 {
@@ -59,13 +62,21 @@ namespace ECareClinic.Infrastructure.Services
 					Errors = new[] { "Invalid email or password." }
 				};
 
-			var token = _tokenService.GenerateToken(user);
+			TokenDto token = _tokenService.GenerateToken(user);
+
+			// Save refresh token and its expiration to the user
+			user.RefreshToken = token.RefreshToken;
+			user.RefreshTokenExpiration = token.RefreshTokenExpiration;
+			await _userManager.UpdateAsync(user);
 
 			return new LoginResponseDto
 			{
 				Success = true,
 				Message = "Login successful.",
-				Token = token,
+				Token = token.Token,
+				TokenExpiration = token.TokenExpiration,
+				RefreshToken = token.RefreshToken,
+				RefreshTokenExpiration = token.RefreshTokenExpiration,
 				User = new UserDto
 				{
 					Id = user.Id,
@@ -180,7 +191,77 @@ namespace ECareClinic.Infrastructure.Services
 				Message = "Password reset successfully."
 			};
 		}
+		public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenDto dto)
+		{
+			if (dto == null)
+			{
+				return new RefreshTokenResponseDto {
+					Success = false,
+					Message = "Invalid client request",
+					Errors = new[] { "Refresh token request cannot be null" }
+				};
+			}
 
+			try
+			{
+				// Extract principal from expired token
+				ClaimsPrincipal? principal = _tokenService.GetPrincipalFromJwtToken(dto.Token);
+				if (principal == null)
+				{
+					return new RefreshTokenResponseDto {
+						Success = false,
+						Message = "Invalid JWT access token",
+						Errors = new[] { "Token validation failed" }
+					};
+				}
 
+				string? email = principal.FindFirstValue(ClaimTypes.Email);
+				if (string.IsNullOrEmpty(email))
+				{
+					return new RefreshTokenResponseDto {
+						Success = false,
+						Message = "Email claim missing in token",
+						Errors = new[] { "The JWT does not contain an email claim" }
+					};
+				}
+
+				ApplicationUser? user = await _userManager.FindByEmailAsync(email);
+				if (user == null ||
+					user.RefreshToken != dto.RefreshToken ||
+					user.RefreshTokenExpiration <= DateTime.Now)
+				{
+					return new RefreshTokenResponseDto {
+						Success = false,
+						Message = "Invalid refresh token",
+						Errors = new[] { "The refresh token is invalid or expired" }
+					};
+				}
+
+				// Generate new tokens
+				var tokenResponse = _tokenService.GenerateToken(user);
+
+				// Update user with new refresh token
+				user.RefreshToken = tokenResponse.RefreshToken;
+				user.RefreshTokenExpiration = tokenResponse.RefreshTokenExpiration;
+				await _userManager.UpdateAsync(user);
+
+				return new RefreshTokenResponseDto { 
+					Success = true,
+					Message = "Token refreshed successfully",
+					Token = tokenResponse.Token,
+					TokenExpiration = tokenResponse.TokenExpiration,
+					RefreshToken = tokenResponse.RefreshToken,
+					RefreshTokenExpiration = tokenResponse.RefreshTokenExpiration
+				};
+			}
+			catch (Exception ex)
+			{
+				return new RefreshTokenResponseDto {
+					Success = false,
+					Message = "An error occurred while refreshing the token",
+					Errors = new[] { ex.Message }
+				};
+			}
+		}
 	}
 }

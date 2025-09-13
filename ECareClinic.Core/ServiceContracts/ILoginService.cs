@@ -15,5 +15,6 @@ namespace ECareClinic.Core.ServiceContracts
 		public Task<BaseResponseDto> ForgotPasswordByEmailAsync(string email);
 		public Task<BaseResponseDto> VerifyPasswordResetOtpAsync(VerifyOtpDto verifyOtpDto);
 		public Task<BaseResponseDto> ResetPasswordAsync(ResetPasswordDto dto);
+		public Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenDto dto);
 	}
 }

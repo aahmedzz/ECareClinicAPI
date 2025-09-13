@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Asp.Versioning;
 using ECareClinic.Core.DTOs.LoginDtos;
 using ECareClinic.Core.DTOs.RegisterationDtos;
-using ECareClinic.Core.Entities;
 using ECareClinic.Core.Identity;
 using ECareClinic.Core.ServiceContracts;
 using ECareClinicAPI.Filters;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ECareClinicAPI.Controllers.v1
@@ -94,10 +95,12 @@ namespace ECareClinicAPI.Controllers.v1
 			var result = await _loginService.ResetPasswordAsync(dto);
 			return (result.Success) ? Ok(result) : BadRequest(result);
 		}
-		[HttpGet("test")]
-		public IActionResult Test()
+
+		[HttpPost("generate-new-jwt-token")]
+		public async Task<IActionResult> GenerateNewAccessToken([FromBody] RefreshTokenDto dto)
 		{
-			return Ok("Account Controller is working");
+			var result = await _loginService.RefreshTokenAsync(dto);
+			return (result.Success) ? Ok(result) : BadRequest(result);
 		}
 
 	}
