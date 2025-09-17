@@ -1,5 +1,8 @@
 using Asp.Versioning.ApiExplorer;
+using ECareClinic.Core.Identity;
+using ECareClinic.Infrastructure.Identity;
 using ECareClinicAPI.Extensions;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,4 +34,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+	// Seed Roles
+	await RoleSeeder.SeedRolesAsync(roleManager);
+}
 app.Run();
