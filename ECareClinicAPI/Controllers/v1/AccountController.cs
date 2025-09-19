@@ -6,6 +6,7 @@ using ECareClinic.Core.DTOs.RegisterationDtos;
 using ECareClinic.Core.Identity;
 using ECareClinic.Core.ServiceContracts;
 using ECareClinicAPI.Filters;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -103,5 +104,16 @@ namespace ECareClinicAPI.Controllers.v1
 			return (result.Success) ? Ok(result) : BadRequest(result);
 		}
 
+		[Authorize]
+		[HttpPost("logout")]
+		public async Task<IActionResult> Logout()
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (userId == null) return Unauthorized();
+
+			var response = await _loginService.LogoutAsync(userId);
+
+			return response.Success ? Ok(response) : BadRequest(response);
+		}
 	}
 }

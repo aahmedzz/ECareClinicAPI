@@ -263,5 +263,36 @@ namespace ECareClinic.Infrastructure.Services
 				};
 			}
 		}
+		public async Task<BaseResponseDto> LogoutAsync(string userId)
+		{
+			var user = await _userManager.FindByIdAsync(userId);
+			if (user == null)
+			{
+				return new BaseResponseDto
+				{
+					Success = false,
+					Errors = new[] { "User not found." }
+				};
+			}
+
+			user.RefreshToken = null;
+			user.RefreshTokenExpiration = null;
+
+			var result = await _userManager.UpdateAsync(user);
+			if (!result.Succeeded)
+			{
+				return new BaseResponseDto
+				{
+					Success = false,
+					Errors = result.Errors.Select(e => e.Description).ToArray()
+				};
+			}
+
+			return new BaseResponseDto
+			{
+				Success = true,
+				Message = "Logged out successfully."
+			};
+		}
 	}
 }
