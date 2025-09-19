@@ -11,7 +11,7 @@ namespace ECareClinic.Core.ServiceContracts
 {
 	public interface ITokenService
 	{
-		TokenDto GenerateToken(ApplicationUser applicationUser);
-		ClaimsPrincipal? GetPrincipalFromJwtToken(string? token);
+		Task<TokenDto> GenerateToken(ApplicationUser applicationUser);
+		ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token);
 	}
 }

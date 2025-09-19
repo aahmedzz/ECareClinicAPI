@@ -21,7 +21,7 @@ namespace ECareClinicAPI.Extensions
 			services.AddControllers(options =>
 			{
 				options.Filters.Add(new ProducesAttribute("application/json"));
-				options.Filters.Add(new ConsumesAttribute("application/json"));
+				//options.Filters.Add(new ConsumesAttribute("application/json"));
 			});
 
 			// API Versioning
@@ -59,6 +59,32 @@ namespace ECareClinicAPI.Extensions
 						Version = description.ApiVersion.ToString(),
 					});
 				}
+
+				// Add JWT Authentication support
+				options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+				{
+					Name = "Authorization",
+					Type = SecuritySchemeType.ApiKey,
+					Scheme = "Bearer",
+					BearerFormat = "JWT",
+					In = ParameterLocation.Header,
+					Description = "Enter 'Bearer' [space] and then your valid token.\r\n\r\nExample: \"Bearer abc123\""
+				});
+
+				options.AddSecurityRequirement(new OpenApiSecurityRequirement
+				{
+					{
+						new OpenApiSecurityScheme
+						{
+							Reference = new OpenApiReference
+							{
+								Type = ReferenceType.SecurityScheme,
+								Id = "Bearer"
+							}
+						},
+						Array.Empty<string>()
+					}
+				});
 			});
 
 
@@ -91,19 +117,23 @@ namespace ECareClinicAPI.Extensions
 			 .AddDefaultTokenProviders();
 
 			//config JWT authentication
-			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-				.AddJwtBearer(options =>
+			services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+			})
+			.AddJwtBearer(options =>
+			{
+				options.TokenValidationParameters = new TokenValidationParameters
 				{
-					options.TokenValidationParameters = new TokenValidationParameters
-					{
-						ValidateIssuer = false,
-						ValidateAudience = false,
-						ValidateLifetime = true,
-						ValidateIssuerSigningKey = true,
-						IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+					ValidateIssuer = false,
+					ValidateAudience = false,
+					ValidateLifetime = true,
+					ValidateIssuerSigningKey = true,
+					IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
 
-					};
-				});
+				};
+			});
 
 			//Configurations
 			services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
@@ -117,6 +147,7 @@ namespace ECareClinicAPI.Extensions
 			services.AddTransient<IEmailService, EmailService>();
 			services.AddScoped<IRegisterService, RegisterService>();
 			services.AddScoped<ILoginService, LoginService>();
+			services.AddScoped<IProfileService, ProfileService>();
 
 
 			return services;

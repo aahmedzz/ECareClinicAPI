@@ -11,18 +11,21 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using ECareClinic.Core.DTOs.RegisterationDtos;
+using Microsoft.AspNetCore.Identity;
 
 namespace ECareClinic.Infrastructure.Services
 {
 	public class TokenService : ITokenService
 	{
 		private readonly IConfiguration _configuration;
+		private readonly UserManager<ApplicationUser> _userManager;
 
-		public TokenService(IConfiguration configuration)
+		public TokenService(IConfiguration configuration, UserManager<ApplicationUser> userManager)
 		{
 			_configuration = configuration;
+			_userManager = userManager;
 		}
-		public TokenDto GenerateToken(ApplicationUser applicationUser)
+		public async Task<TokenDto> GenerateToken(ApplicationUser applicationUser)
 		{
 			var secretKey = _configuration["Jwt:Key"];
 			//check if key is null or empty
@@ -38,11 +41,14 @@ namespace ECareClinic.Infrastructure.Services
 			// create claims
 			var claims = new List<Claim>
 			{
-				new Claim(JwtRegisteredClaimNames.Sub, applicationUser.Email),
+				new Claim(JwtRegisteredClaimNames.Sub, applicationUser.Id),
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 				new Claim(ClaimTypes.NameIdentifier, applicationUser.Id),
-				new Claim(ClaimTypes.Email, applicationUser.Email),
+				new Claim(ClaimTypes.Email, applicationUser.Email ?? string.Empty),
 			};
+
+			var roles = await _userManager.GetRolesAsync(applicationUser);
+			claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
 			var expiration = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:ExpireMinutes"]!));
 			//create the token
@@ -62,7 +68,7 @@ namespace ECareClinic.Infrastructure.Services
 			};
 		}
 
-		public ClaimsPrincipal? GetPrincipalFromJwtToken(string? token)
+		public ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token)
 		{
 			var tokenValidationParameters = new TokenValidationParameters()
 			{

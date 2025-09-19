@@ -19,5 +19,8 @@ namespace ECareClinic.Core.DTOs.RegisterationDtos
 		[Required]
 		[StringLength(30, MinimumLength = 8)]
 		public string Password { get; set; } = null!;
+		[Required]
+		[RegularExpression("^(?:\\+20|0)(10|11|12|15)\\d{8}$",ErrorMessage = "Must be a valid phone number")] 
+		public string PhoneNumber { get; set; } = null!;
 	}
 }

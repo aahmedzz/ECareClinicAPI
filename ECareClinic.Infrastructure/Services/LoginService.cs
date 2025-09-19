@@ -62,7 +62,7 @@ namespace ECareClinic.Infrastructure.Services
 					Errors = new[] { "Invalid email or password." }
 				};
 
-			TokenDto token = _tokenService.GenerateToken(user);
+			TokenDto token = await _tokenService.GenerateToken(user);
 
 			// Save refresh token and its expiration to the user
 			user.RefreshToken = token.RefreshToken;
@@ -205,7 +205,7 @@ namespace ECareClinic.Infrastructure.Services
 			try
 			{
 				// Extract principal from expired token
-				ClaimsPrincipal? principal = _tokenService.GetPrincipalFromJwtToken(dto.Token);
+				ClaimsPrincipal? principal = _tokenService.GetPrincipalFromExpiredToken(dto.Token);
 				if (principal == null)
 				{
 					return new RefreshTokenResponseDto {
@@ -238,7 +238,7 @@ namespace ECareClinic.Infrastructure.Services
 				}
 
 				// Generate new tokens
-				var tokenResponse = _tokenService.GenerateToken(user);
+				var tokenResponse = await _tokenService.GenerateToken(user);
 
 				// Update user with new refresh token
 				user.RefreshToken = tokenResponse.RefreshToken;

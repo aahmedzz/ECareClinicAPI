@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,17 +22,20 @@ namespace ECareClinic.Infrastructure.Services
 		private readonly AppDbContext _db;
 		private readonly IEmailService _emailService;
 		private readonly ITokenService _tokenService;
+		private readonly RoleManager<ApplicationRole> _roleManager;
 
 		public RegisterService(
 			UserManager<ApplicationUser> userManager,
 			AppDbContext db,
 			IEmailService emailService,
-			ITokenService tokenService)
+			ITokenService tokenService,
+			RoleManager<ApplicationRole> roleManager)
 		{
 			_userManager = userManager;
 			_db = db;
 			_emailService = emailService;
 			_tokenService = tokenService;
+			_roleManager = roleManager;
 		}
 		public async Task<RegisterResponseDto> RegisterUserAsync(RegisterDto dto)
 		{
@@ -63,6 +67,7 @@ namespace ECareClinic.Infrastructure.Services
 			{
 				UserName = dto.UserName,
 				Email = dto.Email,
+				PhoneNumber = dto.PhoneNumber,
 				EmailConfirmed = false
 			};
 
@@ -75,6 +80,20 @@ namespace ECareClinic.Infrastructure.Services
 					Errors = result.Errors.Select(e => e.Description).ToArray()
 				};
 			}
+
+			// Ensure the "Patient" role exists
+			if (!await _roleManager.RoleExistsAsync("Patient"))
+			{
+				var role = new ApplicationRole
+				{
+					Name = "Patient",
+					NormalizedName = "PATIENT"
+				};
+				await _roleManager.CreateAsync(role);
+			}
+
+			// Assign role to user
+			await _userManager.AddToRoleAsync(user, "Patient");
 
 			// Send OTP for new user
 			await GenerateAndSendOtpAsync(dto.Email);
@@ -111,7 +130,7 @@ namespace ECareClinic.Infrastructure.Services
 			user.EmailConfirmed = true;
 
 			// Generate token and refresh token from the TokenService
-			var tokenDto = _tokenService.GenerateToken(user);
+			var tokenDto = await _tokenService.GenerateToken(user);
 
 			// Save refresh token and its expiration to the user
 			user.RefreshToken = tokenDto.RefreshToken;
