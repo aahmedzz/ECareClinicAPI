@@ -14,7 +14,9 @@ using Microsoft.AspNetCore.Hosting;
 using ECareClinic.Core.Enums;
 using ECareClinic.Core.DTOs;
 using ECareClinic.Infrastructure.Settings;
-using Microsoft.AspNetCore.Http;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.Extensions.Configuration;
 
 namespace ECareClinic.Infrastructure.Services
 {
@@ -22,19 +24,15 @@ namespace ECareClinic.Infrastructure.Services
 	{
 		private readonly AppDbContext _db;
 		private readonly UserManager<ApplicationUser> _userManager;
-		private readonly IWebHostEnvironment _env;
-		private readonly IHttpContextAccessor _httpContextAccessor;
-
-		public ProfileService(IWebHostEnvironment env, 
+		private readonly IConfiguration _configuration;
+		public ProfileService(
 			AppDbContext db,
 			UserManager<ApplicationUser> userManager,
-			IHttpContextAccessor httpContextAccessor
-			)
+			IConfiguration configuration)
 		{
 			_db = db;
 			_userManager = userManager;
-			_env = env;
-			_httpContextAccessor = httpContextAccessor;
+			_configuration = configuration;
 		}
 
 		public async Task<CreatePatientProfileResponseDto> CreatePatientProfileAsync(string userId, CreatePatientProfileDto dto)
@@ -91,81 +89,124 @@ namespace ECareClinic.Infrastructure.Services
 
 		public async Task<BaseResponseDto> SetProfilePhotoAsync(string userId, byte[] photoBytes, string extension)
 		{
-			if (!PatientProfImgSettings.AllowedExtensions.Split(',').Contains(extension.ToLower()))
+			try
 			{
-				return new BaseResponseDto { Success = false, Errors = new[] { "Invalid file type." } };
+				var cloudinarySettings = _configuration.GetSection("CloudinarySettings");
+				var account = new Account(cloudinarySettings["CloudName"], cloudinarySettings["Key"], cloudinarySettings["Secret"]);
+				var cloudinary = new Cloudinary(account);
+
+				if (!PatientProfImgSettings.AllowedExtensions.Split(',').Contains(extension.ToLower()))
+				{
+					return new BaseResponseDto { Success = false, Errors = new[] { "Invalid file type." } };
+				}
+
+				var patient = await _db.Patients.FirstOrDefaultAsync(p => p.PatientId == userId);
+				if (patient == null)
+					return new BaseResponseDto { Success = false, Errors = new[] { "Patient not found." } };
+
+				// 1. Delete old photo if exists
+				if (!string.IsNullOrEmpty(patient.PhotoURL))
+				{
+					// Extract publicId from the old URL (Cloudinary requires this)
+					var publicId = GetPublicIdFromUrl(patient.PhotoURL);
+					if (!string.IsNullOrEmpty(publicId))
+					{
+						await cloudinary.DestroyAsync(new DeletionParams(publicId));
+					}
+				}
+
+				// 2. Upload new photo
+				using (var stream = new MemoryStream(photoBytes))
+				{
+					var uploadParams = new ImageUploadParams()
+					{
+						File = new FileDescription($"{userId}{extension}", stream),
+						Folder = PatientProfImgSettings.PatientProfileImagePath,
+						PublicId = userId,
+						Overwrite = true 
+					};
+
+					var uploadResult = await cloudinary.UploadAsync(uploadParams);
+
+					// 3. Update DB with new photo URL
+					patient.PhotoURL = uploadResult.SecureUrl.ToString();
+					await _db.SaveChangesAsync();
+
+					return new BaseResponseDto { Success = true, Message = "Photo saved successfully." };
+				}
 			}
-
-			var uploadsFolder = Path.Combine(_env.WebRootPath, PatientProfImgSettings.PatientProfileImagePath.TrimStart('/'));
-			if (!Directory.Exists(uploadsFolder))
-				Directory.CreateDirectory(uploadsFolder);
-
-			var patient = await _db.Patients.FirstOrDefaultAsync(p => p.PatientId == userId);
-			if (patient == null)
+			catch (Exception ex)
 			{
-				return new BaseResponseDto { Success = false, Errors = new[] { "Patient not found." } };
+				return new BaseResponseDto { Success = false, Errors = new[] { ex.Message, ex.StackTrace ?? "" } };
 			}
-
-			// Delete old photo if exists
-			if (!string.IsNullOrEmpty(patient.PhotoURL))
-			{
-				var oldFilePath = Path.Combine(_env.WebRootPath, patient.PhotoURL.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
-				if (File.Exists(oldFilePath))
-					File.Delete(oldFilePath);
-			}
-
-			// Save new photo
-			var fileName = $"{userId}{extension}";
-			var filePath = Path.Combine(uploadsFolder, fileName);
-			await File.WriteAllBytesAsync(filePath, photoBytes);
-
-			// Update DB
-			var relativePath = Path.Combine(PatientProfImgSettings.PatientProfileImagePath, fileName).Replace("\\", "/");
-			patient.PhotoURL = relativePath;
-			await _db.SaveChangesAsync();
-
-			return new BaseResponseDto { Success = true, Message = "Photo saved successfully." };
 		}
 
 		public async Task<BaseResponseDto> RemoveProfilePhotoAsync(string userId)
 		{
-			var patient = await _db.Patients.FirstOrDefaultAsync(p => p.PatientId == userId);
-			if (patient == null)
+			try
+			{
+				var patient = await _db.Patients.FirstOrDefaultAsync(p => p.PatientId == userId);
+				if (patient == null)
+				{
+					return new BaseResponseDto
+					{
+						Success = false,
+						Errors = new[] { "Patient not found." }
+					};
+				}
+
+				if (string.IsNullOrEmpty(patient.PhotoURL))
+				{
+					return new BaseResponseDto
+					{
+						Success = false,
+						Errors = new[] { "No profile photo to remove." }
+					};
+				}
+
+				var uri = new Uri(patient.PhotoURL);
+				var publicIdWithExt = Path.GetFileNameWithoutExtension(uri.LocalPath);
+				var folder = "PatientsProfPhotos";
+				var publicId = $"{folder}/{publicIdWithExt}";
+
+				var cloudinarySettings = _configuration.GetSection("CloudinarySettings");
+				var account = new Account(cloudinarySettings["CloudName"], cloudinarySettings["Key"], cloudinarySettings["Secret"]);
+				var cloudinary = new Cloudinary(account);
+
+				// Delete from Cloudinary
+				var deletionParams = new DeletionParams(publicId)
+				{
+					ResourceType = ResourceType.Image
+				};
+				var deletionResult = await cloudinary.DestroyAsync(deletionParams);
+
+				if (deletionResult.Result != "ok" && deletionResult.Result != "not found")
+				{
+					return new BaseResponseDto
+					{
+						Success = false,
+						Errors = new[] { "Failed to remove profile photo." }
+					};
+				}
+
+				// Clear DB field
+				patient.PhotoURL = null;
+				await _db.SaveChangesAsync();
+
+				return new BaseResponseDto
+				{
+					Success = true,
+					Message = "Profile photo removed successfully."
+				};
+			}
+			catch (Exception ex)
 			{
 				return new BaseResponseDto
 				{
 					Success = false,
-					Errors = new[] { "Patient not found." }
+					Errors = new[] { ex.Message, ex.StackTrace ?? "" }
 				};
 			}
-
-			if (string.IsNullOrEmpty(patient.PhotoURL))
-			{
-				return new BaseResponseDto
-				{
-					Success = false,
-					Errors = new[] { "No profile photo to remove." }
-				};
-			}
-
-			// Delete photo file if it exists
-			var filePath = Path.Combine(
-				_env.WebRootPath,
-				patient.PhotoURL.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString())
-			);
-
-			if (File.Exists(filePath))
-				File.Delete(filePath);
-
-			// Clear DB field
-			patient.PhotoURL = null;
-			await _db.SaveChangesAsync();
-
-			return new BaseResponseDto
-			{
-				Success = true,
-				Message = "Profile photo removed successfully."
-			};
 		}
 
 		public async Task<BaseResponseDto> UpdatePatientProfileAsync(string userId, UpdatePatientProfileDto dto)
@@ -273,10 +314,28 @@ namespace ECareClinic.Infrastructure.Services
 				Address = patient.Address,
 				Province = patient.Province,
 				City = patient.City,
-				PhotoUrl = string.IsNullOrEmpty(patient.PhotoURL)
-					? string.Empty
-					: $"{_httpContextAccessor.HttpContext?.Request.Scheme}://{_httpContextAccessor.HttpContext?.Request.Host}{patient.PhotoURL}"
+				PhotoUrl = string.IsNullOrEmpty(patient.PhotoURL)? string.Empty: patient.PhotoURL
 			};
+		}
+
+		/// <summary>
+		/// Extracts the public ID from a Cloudinary URL (needed for deletion).
+		/// </summary>
+		private string GetPublicIdFromUrl(string url)
+		{
+			try
+			{
+				var uri = new Uri(url);
+				var segments = uri.AbsolutePath.Split('/');
+				// remove extension (.jpg, .png, etc.)
+				var fileName = Path.GetFileNameWithoutExtension(segments.Last());
+				var folderPath = string.Join("/", segments.SkipWhile(s => s != "upload").Skip(1).Take(segments.Length - 2));
+				return $"{folderPath}/{fileName}";
+			}
+			catch
+			{
+				return null;
+			}
 		}
 	}
 }
