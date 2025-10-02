@@ -43,9 +43,6 @@ namespace ECareClinic.Core.DTOs.ProfileDtos
 		[RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "Username can only contain letters, numbers, and underscores.")]
 		public string UserName { get; set; } = null!;
 		[Required]
-		[EmailAddress]
-		public string Email { get; set; } = null!;
-		[Required]
 		[RegularExpression("^(?:\\+20|0)(10|11|12|15)\\d{8}$", ErrorMessage = "Must be a valid phone number")]
 		public string PhoneNumber { get; set; } = null!;
 		public static ValidationResult? ValidateDateOfBirth(DateTime date, ValidationContext context)

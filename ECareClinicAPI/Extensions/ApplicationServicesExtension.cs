@@ -112,6 +112,7 @@ namespace ECareClinicAPI.Extensions
 				options.Password.RequireUppercase = true;
 				options.Password.RequireLowercase = true;
 				options.Password.RequireDigit = true;
+				options.User.RequireUniqueEmail = true;
 			})
 			 .AddEntityFrameworkStores<AppDbContext>()
 			 .AddDefaultTokenProviders();

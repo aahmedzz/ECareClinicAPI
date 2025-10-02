@@ -254,12 +254,6 @@ namespace ECareClinic.Infrastructure.Services
 			// Update Identity fields (ApplicationUser)
 			IdentityResult identityResult = IdentityResult.Success;
 
-			if (!string.IsNullOrEmpty(dto.Email) && dto.Email != user.Email)
-			{
-				user.Email = dto.Email;
-				identityResult = await _userManager.UpdateAsync(user);
-			}
-
 			if (!string.IsNullOrEmpty(dto.UserName) && dto.UserName != user.UserName)
 			{
 				user.UserName = dto.UserName;
@@ -268,6 +262,17 @@ namespace ECareClinic.Infrastructure.Services
 
 			if (!string.IsNullOrEmpty(dto.PhoneNumber) && dto.PhoneNumber != user.PhoneNumber)
 			{
+				bool phoneExists = await _userManager.Users
+					.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber);
+
+				if (phoneExists)
+				{
+					return new BaseResponseDto
+					{
+						Success = false,
+						Errors = new[] { "This phone number is already in use." }
+					};
+				}
 				user.PhoneNumber = dto.PhoneNumber;
 				identityResult = await _userManager.UpdateAsync(user);
 			}
