@@ -306,20 +306,25 @@ namespace ECareClinic.Infrastructure.Services
 				Errors = new[] { "Patient profile not found." }
 			};
 
-			return new PatientProfileResponseDto
+			ProfileDTO profileDTO = new ProfileDTO
 			{
-				Success = true,
 				PatientId = patient.PatientId,
 				FirstName = patient.FirstName,
 				LastName = patient.LastName,
 				Email = patient.User?.Email ?? string.Empty,
+				UserName = patient.User?.UserName ?? string.Empty,
 				PhoneNumber = patient.User?.PhoneNumber ?? string.Empty,
 				Gender = patient.Gender.ToString(),
 				DateOfBirth = patient.DateOfBirth,
 				Address = patient.Address,
 				Province = patient.Province,
 				City = patient.City,
-				PhotoUrl = string.IsNullOrEmpty(patient.PhotoURL)? string.Empty: patient.PhotoURL
+				PhotoUrl = string.IsNullOrEmpty(patient.PhotoURL) ? string.Empty : patient.PhotoURL
+			};
+			return new PatientProfileResponseDto
+			{
+				Success = true,
+				Profile = profileDTO
 			};
 		}
 
