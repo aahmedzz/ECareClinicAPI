@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ECareClinic.Core.Entities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -32,14 +33,17 @@ namespace ECareClinic.Core.Models
 		[MaxLength(250)]
 		public string? ReasonForVisit { get; set; }
 
-		[MaxLength(100)]
-		public string? TypeOfVisit { get; set; }
 
-		// Foreign keys
-		public string PatientId { get; set; } = null!;
+
+        public int VisitTypeId { get; set; }
+        public VisitType VisitType { get; set; } = null!;
+        public string PatientId { get; set; } = null!;
 		public Patient Patient { get; set; } = null!;
 
 		public string DoctorId { get; set; } = null!;
 		public Doctor Doctor { get; set; } = null!;
-	}
+
+        public int ScheduleId { get; set; }
+        public DoctorSchedule Schedule { get; set; } = null!;
+    }
 }

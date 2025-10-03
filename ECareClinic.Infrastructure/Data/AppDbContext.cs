@@ -1,4 +1,5 @@
-﻿using ECareClinic.Core.Entities.Auth;
+﻿using ECareClinic.Core.Entities;
+using ECareClinic.Core.Entities.Auth;
 using ECareClinic.Core.Identity;
 using ECareClinic.Core.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -24,9 +25,13 @@ namespace ECareClinic.Infrastructure.Data
 		public DbSet<EmailVerification> EmailVerifications { get; set; } = null!;
 		public DbSet<PasswordResetVerification> passwordResetVerifications { get; set; } = null!;
 
+        public DbSet<DoctorSchedule> DoctorSchedules { get; set; } = null!;
 
+        public DbSet<DoctorVisitType> DoctorVisitTypes { get; set; } = null!;
 
-		protected override void OnModelCreating(ModelBuilder modelBuilder)
+        public DbSet<Specialty> Specialties { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
 
@@ -89,6 +94,42 @@ namespace ECareClinic.Infrastructure.Data
 				.HasForeignKey(i => i.PatientId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-		}
-	}
+            modelBuilder.Entity<DoctorSchedule>()
+                .HasOne(s => s.Doctor)
+                .WithMany(d => d.DoctorSchedules)
+                .HasForeignKey(s => s.DoctorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Schedule)
+                .WithMany(s => s.Appointments)
+                .HasForeignKey(a => a.ScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DoctorVisitType>()
+                .HasOne(dvt => dvt.Doctor)
+                .WithMany(d => d.DoctorVisitTypes)
+                .HasForeignKey(dvt => dvt.DoctorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DoctorVisitType>()
+                .HasOne(dvt => dvt.VisitType)
+                .WithMany(vt => vt.DoctorVisitTypes)
+                .HasForeignKey(dvt => dvt.VisitTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.VisitType)
+                .WithMany(vt => vt.Appointments)
+                .HasForeignKey(a => a.VisitTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            modelBuilder.Entity<Specialty>()
+                .HasMany(s => s.Doctors)
+                .WithOne(d => d.Specialty)
+                .HasForeignKey(d => d.SpecialtyId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
+    }
 }
