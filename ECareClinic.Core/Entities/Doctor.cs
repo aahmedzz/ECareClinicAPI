@@ -37,13 +37,14 @@ namespace ECareClinic.Core.Models
         public int SpecialtyId { get; set; }
         public Specialty Specialty { get; set; } = null!;
 
-        // Foreign keys
-        public ApplicationUser User { get; set; } = null!;
+		public VisitType VisitTypes { get; set; }
+
+		// Foreign keys
+		public ApplicationUser User { get; set; } = null!;
 
         // Navigation properties
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
         public ICollection<MedicalRecord> MedicalRecords { get; set; } = new List<MedicalRecord>();
-        public ICollection<DoctorVisitType> DoctorVisitTypes { get; set; } = new List<DoctorVisitType>();
         public ICollection<DoctorSchedule> DoctorSchedules { get; set; } = new List<DoctorSchedule>();
     }
 

@@ -1,4 +1,5 @@
 ﻿using ECareClinic.Core.Entities;
+using ECareClinic.Core.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -19,14 +20,13 @@ namespace ECareClinic.Core.Models
 
 		[Required]
 		[DataType(DataType.DateTime)]
-		public DateTime StartDate { get; set; }
+		public TimeSpan StartTime { get; set; }
 
 		[DataType(DataType.DateTime)]
-		public DateTime? EndDate { get; set; }
+		public TimeSpan? EndTime { get; set; }
 
 		[Required]
-		[MaxLength(50)]
-		public string Status { get; set; } = null!;
+		public AppointmentStatus Status { get; set; }
 
 		public bool ReminderSent { get; set; }
 
@@ -34,9 +34,7 @@ namespace ECareClinic.Core.Models
 		public string? ReasonForVisit { get; set; }
 
 
-
-        public int VisitTypeId { get; set; }
-        public VisitType VisitType { get; set; } = null!;
+        public VisitType VisitType { get; set; }
         public string PatientId { get; set; } = null!;
 		public Patient Patient { get; set; } = null!;
 

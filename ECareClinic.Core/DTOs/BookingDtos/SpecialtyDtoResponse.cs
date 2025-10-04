@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ECareClinic.Core.DTOs.BookingDtos
 {
 
-        public class SpecialtyDto
+        public class SpecialtyDtoResponse
         {
             public int SpecialtyId { get; set; }
             public string Name { get; set; } = null!;

@@ -26,8 +26,9 @@ namespace ECareClinic.Core.Entities
         public TimeSpan EndTime { get; set; }
 
         public bool IsAvailable { get; set; } = true;
+		public int SlotDurationMinutes { get; set; } = 30;
 
-        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+		public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 
 }
