@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Text.Json.Serialization;
 
 namespace ECareClinicAPI.Extensions
 {
@@ -22,6 +23,10 @@ namespace ECareClinicAPI.Extensions
 			{
 				options.Filters.Add(new ProducesAttribute("application/json"));
 				//options.Filters.Add(new ConsumesAttribute("application/json"));
+			}).AddJsonOptions(options =>
+			{
+				// Serialize enums as strings instead of numbers
+				options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 			});
 
 			// API Versioning

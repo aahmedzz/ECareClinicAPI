@@ -4,6 +4,7 @@ using ECareClinic.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECareClinic.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251004005858_SeedSpecialties")]
+    partial class SeedSpecialties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,7 +46,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmailVerifications", (string)null);
+                    b.ToTable("EmailVerifications");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Entities.Auth.PasswordResetVerification", b =>
@@ -75,7 +78,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("passwordResetVerifications", (string)null);
+                    b.ToTable("passwordResetVerifications");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Entities.DoctorSchedule", b =>
@@ -109,7 +112,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("DoctorId");
 
-                    b.ToTable("DoctorSchedules", (string)null);
+                    b.ToTable("DoctorSchedules");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Entities.Specialty", b =>
@@ -127,7 +130,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasKey("SpecialtyId");
 
-                    b.ToTable("Specialties", (string)null);
+                    b.ToTable("Specialties");
 
                     b.HasData(
                         new
@@ -314,7 +317,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("ScheduleId");
 
-                    b.ToTable("Appointments", (string)null);
+                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Doctor", b =>
@@ -359,7 +362,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("SpecialtyId");
 
-                    b.ToTable("Doctors", (string)null);
+                    b.ToTable("Doctors");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Insurance", b =>
@@ -394,7 +397,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Insurances", (string)null);
+                    b.ToTable("Insurances");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.MedicalRecord", b =>
@@ -437,7 +440,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("MedicalRecords", (string)null);
+                    b.ToTable("MedicalRecords");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Patient", b =>
@@ -479,7 +482,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasKey("PatientId");
 
-                    b.ToTable("Patients", (string)null);
+                    b.ToTable("Patients");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Payment", b =>
@@ -514,7 +517,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PaymentMethodId");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.PaymentMethod", b =>
@@ -559,7 +562,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("PaymentMethods", (string)null);
+                    b.ToTable("PaymentMethods");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

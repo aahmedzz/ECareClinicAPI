@@ -1,5 +1,6 @@
 using Asp.Versioning.ApiExplorer;
 using ECareClinic.Core.Identity;
+using ECareClinic.Infrastructure.Data;
 using ECareClinic.Infrastructure.Identity;
 using ECareClinicAPI.Extensions;
 using Microsoft.AspNetCore.Identity;
@@ -38,7 +39,11 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
 	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+	var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+	var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 	// Seed Roles
-	await RoleSeeder.SeedRolesAsync(roleManager);
+	await AppSeeder.SeedRolesAsync(roleManager);
+	await AppSeeder.SeedDoctorsAsync(context, userManager, roleManager);
+	await AppSeeder.SeedDoctorSchedulesAsync(context);
 }
 app.Run();

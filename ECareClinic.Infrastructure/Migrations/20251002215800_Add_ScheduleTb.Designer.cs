@@ -4,6 +4,7 @@ using ECareClinic.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECareClinic.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002215800_Add_ScheduleTb")]
+    partial class Add_ScheduleTb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,7 +46,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmailVerifications", (string)null);
+                    b.ToTable("EmailVerifications");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Entities.Auth.PasswordResetVerification", b =>
@@ -75,7 +78,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("passwordResetVerifications", (string)null);
+                    b.ToTable("passwordResetVerifications");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Entities.DoctorSchedule", b =>
@@ -99,9 +102,6 @@ namespace ECareClinic.Infrastructure.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
-                    b.Property<int>("SlotDurationMinutes")
-                        .HasColumnType("int");
-
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
@@ -109,62 +109,49 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("DoctorId");
 
-                    b.ToTable("DoctorSchedules", (string)null);
+                    b.ToTable("DoctorSchedules");
                 });
 
-            modelBuilder.Entity("ECareClinic.Core.Entities.Specialty", b =>
+            modelBuilder.Entity("ECareClinic.Core.Entities.DoctorVisitType", b =>
                 {
-                    b.Property<int>("SpecialtyId")
+                    b.Property<int>("DoctorVisitTypeId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SpecialtyId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DoctorVisitTypeId"));
+
+                    b.Property<string>("DoctorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("VisitTypeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("DoctorVisitTypeId");
+
+                    b.HasIndex("DoctorId");
+
+                    b.HasIndex("VisitTypeId");
+
+                    b.ToTable("DoctorVisitTypes");
+                });
+
+            modelBuilder.Entity("ECareClinic.Core.Entities.VisitType", b =>
+                {
+                    b.Property<int>("VisitTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VisitTypeId"));
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("SpecialtyId");
+                    b.HasKey("VisitTypeId");
 
-                    b.ToTable("Specialties", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            SpecialtyId = 1,
-                            Name = "Orthopedic"
-                        },
-                        new
-                        {
-                            SpecialtyId = 2,
-                            Name = "Pediatric"
-                        },
-                        new
-                        {
-                            SpecialtyId = 3,
-                            Name = "Neurosurgeon"
-                        },
-                        new
-                        {
-                            SpecialtyId = 4,
-                            Name = "Orthopedics"
-                        },
-                        new
-                        {
-                            SpecialtyId = 5,
-                            Name = "Pediatrics"
-                        },
-                        new
-                        {
-                            SpecialtyId = 6,
-                            Name = "Psychiatry"
-                        },
-                        new
-                        {
-                            SpecialtyId = 7,
-                            Name = "Radiology"
-                        });
+                    b.ToTable("VisitType");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Identity.ApplicationRole", b =>
@@ -280,8 +267,8 @@ namespace ECareClinic.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<TimeSpan?>("EndTime")
-                        .HasColumnType("time");
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PatientId")
                         .IsRequired()
@@ -297,13 +284,15 @@ namespace ECareClinic.Infrastructure.Migrations
                     b.Property<int>("ScheduleId")
                         .HasColumnType("int");
 
-                    b.Property<TimeSpan>("StartTime")
-                        .HasColumnType("time");
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("VisitType")
+                    b.Property<int>("VisitTypeId")
                         .HasColumnType("int");
 
                     b.HasKey("AppointmentId");
@@ -314,7 +303,9 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("ScheduleId");
 
-                    b.ToTable("Appointments", (string)null);
+                    b.HasIndex("VisitTypeId");
+
+                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Doctor", b =>
@@ -346,20 +337,16 @@ namespace ECareClinic.Infrastructure.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
-                    b.Property<int>("SpecialtyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VisitTypes")
-                        .HasColumnType("int");
+                    b.Property<string>("Specialization")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("YearsOfExperience")
                         .HasColumnType("int");
 
                     b.HasKey("DoctorId");
 
-                    b.HasIndex("SpecialtyId");
-
-                    b.ToTable("Doctors", (string)null);
+                    b.ToTable("Doctors");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Insurance", b =>
@@ -394,7 +381,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Insurances", (string)null);
+                    b.ToTable("Insurances");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.MedicalRecord", b =>
@@ -437,7 +424,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("MedicalRecords", (string)null);
+                    b.ToTable("MedicalRecords");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Patient", b =>
@@ -479,7 +466,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasKey("PatientId");
 
-                    b.ToTable("Patients", (string)null);
+                    b.ToTable("Patients");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Payment", b =>
@@ -514,7 +501,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PaymentMethodId");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.PaymentMethod", b =>
@@ -559,7 +546,7 @@ namespace ECareClinic.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("PaymentMethods", (string)null);
+                    b.ToTable("PaymentMethods");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -679,6 +666,25 @@ namespace ECareClinic.Infrastructure.Migrations
                     b.Navigation("Doctor");
                 });
 
+            modelBuilder.Entity("ECareClinic.Core.Entities.DoctorVisitType", b =>
+                {
+                    b.HasOne("ECareClinic.Core.Models.Doctor", "Doctor")
+                        .WithMany("DoctorVisitTypes")
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ECareClinic.Core.Entities.VisitType", "VisitType")
+                        .WithMany("DoctorVisitTypes")
+                        .HasForeignKey("VisitTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Doctor");
+
+                    b.Navigation("VisitType");
+                });
+
             modelBuilder.Entity("ECareClinic.Core.Models.Appointment", b =>
                 {
                     b.HasOne("ECareClinic.Core.Models.Doctor", "Doctor")
@@ -699,11 +705,19 @@ namespace ECareClinic.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ECareClinic.Core.Entities.VisitType", "VisitType")
+                        .WithMany("Appointments")
+                        .HasForeignKey("VisitTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
 
                     b.Navigation("Schedule");
+
+                    b.Navigation("VisitType");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Doctor", b =>
@@ -713,14 +727,6 @@ namespace ECareClinic.Infrastructure.Migrations
                         .HasForeignKey("ECareClinic.Core.Models.Doctor", "DoctorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("ECareClinic.Core.Entities.Specialty", "Specialty")
-                        .WithMany("Doctors")
-                        .HasForeignKey("SpecialtyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Specialty");
 
                     b.Navigation("User");
                 });
@@ -852,9 +858,11 @@ namespace ECareClinic.Infrastructure.Migrations
                     b.Navigation("Appointments");
                 });
 
-            modelBuilder.Entity("ECareClinic.Core.Entities.Specialty", b =>
+            modelBuilder.Entity("ECareClinic.Core.Entities.VisitType", b =>
                 {
-                    b.Navigation("Doctors");
+                    b.Navigation("Appointments");
+
+                    b.Navigation("DoctorVisitTypes");
                 });
 
             modelBuilder.Entity("ECareClinic.Core.Models.Doctor", b =>
@@ -862,6 +870,8 @@ namespace ECareClinic.Infrastructure.Migrations
                     b.Navigation("Appointments");
 
                     b.Navigation("DoctorSchedules");
+
+                    b.Navigation("DoctorVisitTypes");
 
                     b.Navigation("MedicalRecords");
                 });

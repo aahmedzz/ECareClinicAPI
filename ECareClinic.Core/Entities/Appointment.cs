@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ECareClinic.Core.Entities;
+using ECareClinic.Core.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -18,28 +20,28 @@ namespace ECareClinic.Core.Models
 
 		[Required]
 		[DataType(DataType.DateTime)]
-		public DateTime StartDate { get; set; }
+		public TimeSpan StartTime { get; set; }
 
 		[DataType(DataType.DateTime)]
-		public DateTime? EndDate { get; set; }
+		public TimeSpan? EndTime { get; set; }
 
 		[Required]
-		[MaxLength(50)]
-		public string Status { get; set; } = null!;
+		public AppointmentStatus Status { get; set; }
 
 		public bool ReminderSent { get; set; }
 
 		[MaxLength(250)]
 		public string? ReasonForVisit { get; set; }
 
-		[MaxLength(100)]
-		public string? TypeOfVisit { get; set; }
 
-		// Foreign keys
-		public string PatientId { get; set; } = null!;
+        public VisitType VisitType { get; set; }
+        public string PatientId { get; set; } = null!;
 		public Patient Patient { get; set; } = null!;
 
 		public string DoctorId { get; set; } = null!;
 		public Doctor Doctor { get; set; } = null!;
-	}
+
+        public int ScheduleId { get; set; }
+        public DoctorSchedule Schedule { get; set; } = null!;
+    }
 }
