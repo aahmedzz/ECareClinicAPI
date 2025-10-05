@@ -60,6 +60,18 @@ namespace ECareClinicAPI.Controllers.v1
 
 			var response = await _profileService.SetProfilePhotoAsync(userId, photoBytes , extension);
 			return response.Success ? Ok(response) : BadRequest(response);
+		}	
+
+		[HttpGet("get-patient-profile-photo")]
+		[Authorize(Roles = "Patient")]
+		public async Task<IActionResult> GetPatientProfilePhoto()
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+				return Unauthorized(new BaseResponseDto{ Success = false, Errors = new[] { "Invalid user token" } });
+
+			var response = await _profileService.GetProfilePhotoAsync(userId);
+			return response.Success ? Ok(response) : BadRequest(response);
 		}
 
 		[HttpDelete("remove-patient-profile-photo")]

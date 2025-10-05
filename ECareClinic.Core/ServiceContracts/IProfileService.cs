@@ -17,6 +17,7 @@ namespace ECareClinic.Core.ServiceContracts
 	{
 		public Task<CreatePatientProfileResponseDto> CreatePatientProfileAsync(string userId, CreatePatientProfileDto patientProfileDto);
 		public Task<BaseResponseDto> SetProfilePhotoAsync(string userId, byte[] photo, string extension);
+		public Task<PatientProfilePhotoResponse> GetProfilePhotoAsync(string userId);
 		public Task<BaseResponseDto> RemoveProfilePhotoAsync(string userId);
 		public Task<BaseResponseDto> UpdatePatientProfileAsync(string userId, UpdatePatientProfileDto dto);
 		public Task<PatientProfileResponseDto?> GetMyPatientProfileAsync(string userId);

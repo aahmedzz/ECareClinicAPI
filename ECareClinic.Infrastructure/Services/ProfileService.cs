@@ -141,6 +141,34 @@ namespace ECareClinic.Infrastructure.Services
 			}
 		}
 
+		public async Task<PatientProfilePhotoResponse> GetProfilePhotoAsync(string userId)
+		{
+			var patient = await _db.Patients
+				.Include(p => p.User)
+				.FirstOrDefaultAsync(p => p.PatientId == userId);
+
+			if (patient == null) return new PatientProfilePhotoResponse
+			{
+				Success = false,
+				Errors = new[] { "Patient profile not found." }
+			};
+
+			if (string.IsNullOrEmpty(patient.PhotoURL))
+			{
+				return new PatientProfilePhotoResponse
+				{
+					Success = false,
+					Errors = new[] { "No profile photo found." }
+				};
+			}
+			return new PatientProfilePhotoResponse
+			{
+				Success = true,
+				Message = "Profile photo retrieved successfully.",
+				PhotoURL = patient.PhotoURL
+			};
+		}
+
 		public async Task<BaseResponseDto> RemoveProfilePhotoAsync(string userId)
 		{
 			try
